@@ -268,6 +268,8 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records
         <ShareSheet
           card={{
             size: puzzle.size,
+            clues: puzzle.clues,
+            solutionEdges: state.marks.flatMap((m, e) => (m === 1 ? [e] : [])),
             ms: mineMs,
             hints,
             dailyLabel: daily ? `오늘의 판 · ${dateLabel}` : null,

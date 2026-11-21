@@ -11,8 +11,10 @@ interface ShareSheetProps {
 type Copied = "idle" | "true" | "manual";
 
 export function ShareSheet({ card, url, text, onClose }: ShareSheetProps) {
-  // 카드는 시트를 열 때 한 번만 만든다
-  const [png] = useState(() => renderCard(card).toDataURL("image/png"));
+  // 카드는 시트를 열 때 한 번만 만든다.
+  // 화면 미리보기와 이미지 저장은 문제와 정답이 보이는 카드, 남에게 보내는 공유는 판을 가린 카드를 쓴다
+  const [png] = useState(() => renderCard(card, "full").toDataURL("image/png"));
+  const [sharePng] = useState(() => renderCard(card, "share").toDataURL("image/png"));
   const [copied, setCopied] = useState<Copied>("idle");
   const inputRef = useRef<HTMLInputElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -48,7 +50,7 @@ export function ShareSheet({ card, url, text, onClose }: ShareSheetProps) {
 
   const nativeShare = async () => {
     try {
-      const blob = await (await fetch(png)).blob();
+      const blob = await (await fetch(sharePng)).blob();
       const file = new File([blob], `울타리치기-${card.size}x${card.size}.png`, { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], text, url });
@@ -75,6 +77,10 @@ export function ShareSheet({ card, url, text, onClose }: ShareSheetProps) {
           </button>
         </div>
         <img className="share-card" data-testid="result-card" src={png} alt="결과 카드" />
+        <img data-testid="share-card-safe" src={sharePng} alt="" hidden />
+        <p className="share-note" data-testid="share-note">
+          공유하면 정답을 가린 카드가 전송됩니다. 이미지 저장은 정답이 보이는 카드입니다.
+        </p>
         <input
           ref={inputRef}
           className="share-url"

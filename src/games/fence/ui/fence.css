@@ -550,3 +550,11 @@
   text-align: center;
   color: var(--accent);
 }
+
+.share-note {
+  margin: 6px 0 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--muted, #8a99a6);
+  text-align: center;
+}

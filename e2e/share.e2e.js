@@ -67,6 +67,9 @@ const api = (pg) => {
     const dim = await pg.evaluate(() => { const i = document.querySelector('[data-testid="result-card"]'); return [i.naturalWidth, i.naturalHeight]; });
     check(dim[0] === 1080 && dim[1] === 1350, '카드 크기가 1080x1350이 아님: ' + dim);
     if (cardName) console.log('SHOTDATA ' + cardName + ' ' + src.slice('data:image/png;base64,'.length));
+    const safe = await attr(T('share-card-safe'), 'src');
+    check(typeof safe === 'string' && safe.startsWith('data:image/png;base64,') && safe !== src, '공유용 카드가 없거나 정답 카드와 같음');
+    if (cardName) console.log('SHOTDATA ' + cardName + '-share ' + safe.slice('data:image/png;base64,'.length));
     return await pg.locator(T('share-url')).inputValue();
   };
   const closeShare = async () => {
