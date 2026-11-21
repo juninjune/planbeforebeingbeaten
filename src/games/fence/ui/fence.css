@@ -445,3 +445,108 @@
 .fence-record-meta:empty {
   display: none;
 }
+
+/* 도전장 */
+.fence-challenge-banner {
+  margin: 8px 0 0;
+  padding: 4px 8px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ice);
+  background: rgba(var(--light), 0.1);
+  border: 1px solid var(--panel-edge);
+  border-radius: 6px;
+}
+
+.fence-challenge-result {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: var(--ice);
+}
+
+.fence-challenge-result.is-win {
+  color: var(--accent);
+}
+
+.fence-challenge-result.is-lose {
+  color: #d9807a;
+}
+
+.fence-challenge-result.is-assisted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 공유 시트 */
+.share-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.share-head h2 {
+  margin: 0;
+}
+
+.share-head button {
+  min-height: 36px;
+  font-size: 14px;
+}
+
+.share-card {
+  display: block;
+  margin: 0 auto 10px;
+  max-height: 38vh;
+  max-width: 100%;
+  width: auto;
+  aspect-ratio: 1080 / 1350;
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+}
+
+.share-url {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: #0a1016;
+  border: 1px solid var(--panel-edge);
+  border-radius: 8px;
+}
+
+.share-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.share-buttons button,
+.share-buttons .share-save {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 8px;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--text);
+  background: #0e151c;
+  border: 1px solid rgba(150, 200, 235, 0.28);
+  border-radius: 8px;
+}
+
+.share-buttons button[data-copied="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.share-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--accent);
+}

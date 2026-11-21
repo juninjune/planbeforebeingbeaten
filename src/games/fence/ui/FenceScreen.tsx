@@ -8,8 +8,11 @@ import { solve } from "../engine/solver";
 import { nextHint } from "../engine/hint";
 import { initialState, reduce, type FenceAction } from "../engine/state";
 import { toHash } from "../../../app/route";
+import { buildShareParams, judgeChallenge, parseChallenge, type Challenge } from "../challenge";
+import { formatTime } from "../format";
 import { applyCompletion, currentStreak, loadRecords, saveRecords, type FenceRecords, type SizeKey } from "../records";
 import { Board } from "./Board";
+import { ShareSheet } from "./ShareSheet";
 import { hasSeenRules, markRulesSeen, Rules } from "./Rules";
 import "./fence.css";
 
@@ -17,15 +20,6 @@ declare global {
   interface Window {
     __fence?: { size: number; seed: string; clues: (number | null)[]; solution: number[] };
   }
-}
-
-/** 밀리초를 분:초.소수두자리 로 바꾼다. 예: 7420 → "0:07.42" */
-export function formatTime(ms: number): string {
-  const cs = Math.floor(ms / 10);
-  const minutes = Math.floor(cs / 6000);
-  const seconds = Math.floor((cs % 6000) / 100);
-  const rest = cs % 100;
-  return `${minutes}:${String(seconds).padStart(2, "0")}.${String(rest).padStart(2, "0")}`;
 }
 
 const SIZES: Size[] = [5, 7, 10];
@@ -53,9 +47,11 @@ interface PlayProps {
   dailyKey: string | null;
   records: FenceRecords;
   onRecords: (r: FenceRecords) => void;
+  /** 도전장으로 연 판의 도전 기록 */
+  challenge: Challenge | null;
 }
 
-function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records, onRecords }: PlayProps) {
+function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records, onRecords, challenge }: PlayProps) {
   const [state, dispatch] = useReducer((s: ReturnType<typeof initialState>, a: FenceAction) => reduce(puzzle, s, a), puzzle, initialState);
   const startRef = useRef(performance.now());
   const [elapsed, setElapsed] = useState(0);
@@ -66,11 +62,13 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records
   const finalRef = useRef<number | null>(null);
   if (state.solved && finalRef.current === null) finalRef.current = performance.now() - startRef.current;
   const shown = finalRef.current ?? elapsed;
+  const mineMs = Math.round(finalRef.current ?? 0);
+  const [shareOpen, setShareOpen] = useState(false);
 
   // 완성 기록은 완성되는 렌더에서 한 번 계산하고(순수), 저장은 효과에서 한다. 고정 퍼즐은 기록하지 않는다
   const resultRef = useRef<ReturnType<typeof applyCompletion> | null>(null);
   if (state.solved && resultRef.current === null && puzzle.seed !== "fixed") {
-    resultRef.current = applyCompletion(records, { size: puzzle.size, ms: Math.round(finalRef.current ?? 0), hints, dailyKey });
+    resultRef.current = applyCompletion(records, { size: puzzle.size, ms: mineMs, hints, dailyKey });
   }
   const result = resultRef.current;
   const shownRecords = result?.records ?? records;
@@ -117,6 +115,11 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records
   const open = (size: Size) => navigate("/fence", daily ? { size: String(size), daily: "1" } : { size: String(size), seed: newSeed() });
   const openFree = (size: Size) => navigate("/fence", { size: String(size), seed: newSeed() });
   const toggleDaily = () => (daily ? openFree(puzzle.size as Size) : navigate("/fence", { size: String(puzzle.size), daily: "1" }));
+  const judged = state.solved && challenge ? judgeChallenge(challenge, { ms: mineMs, hints }) : null;
+  const shareUrl = () =>
+    `${window.location.origin}${window.location.pathname}#/fence?${new URLSearchParams(
+      buildShareParams({ size: puzzle.size, seed: puzzle.seed, ms: mineMs, hints }),
+    )}`;
   const dateLabel = dailyKey ? `${Number(dailyKey.slice(5, 7))}월 ${Number(dailyKey.slice(8, 10))}일` : "";
 
   return (
@@ -163,6 +166,11 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records
           오늘의 판
         </button>
       </div>
+      {challenge && (
+        <p className="fence-challenge-banner" data-testid="challenge-banner" data-ms={challenge.ms} data-hints={challenge.hints}>
+          도전 기록 {formatTime(challenge.ms)} · {challenge.hints === 0 ? "힌트 없음" : `힌트 ${challenge.hints}회`}
+        </p>
+      )}
       <Board puzzle={puzzle} marks={state.marks} solved={state.solved} highlightEdge={hl?.edge ?? null} onCycle={(edge) => dispatch({ type: "cycle", edge })} />
       <div className="fence-tools">
         <button type="button" data-testid="undo" disabled={state.solved || state.history.length === 0} onClick={() => dispatch({ type: "undo" })}>
@@ -210,9 +218,20 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records
               <span data-testid="daily-streak">연속 {currentStreak(shownRecords, dailyKey)}일</span>
             )}
           </p>
+          {judged && challenge && (
+            <p className={`fence-challenge-result is-${judged.outcome}`} data-testid="challenge-result" data-outcome={judged.outcome}>
+              {judged.outcome === "win" && `도전 성공 · ${formatTime(judged.diffMs)} 빠름`}
+              {judged.outcome === "lose" && `도전 실패 · ${formatTime(judged.diffMs)} 느림`}
+              {judged.outcome === "tie" && "무승부"}
+              {judged.outcome === "assisted" && "힌트를 더 써서 비교에서 제외"}
+            </p>
+          )}
           <div className="fence-actions">
             <button type="button" data-testid="new-game" onClick={() => openFree(puzzle.size as Size)}>
               {daily ? "자유 판" : "새 판"}
+            </button>
+            <button type="button" data-testid="share" onClick={() => setShareOpen(true)}>
+              공유
             </button>
             <button type="button" data-testid="to-lobby" onClick={() => navigate("/")}>
               로비로
@@ -220,15 +239,33 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records
           </div>
         </div>
       )}
+      {shareOpen && (
+        <ShareSheet
+          card={{
+            size: puzzle.size,
+            clues: puzzle.clues,
+            solutionEdges: state.marks.flatMap((m, e) => (m === 1 ? [e] : [])),
+            ms: mineMs,
+            hints,
+            dailyLabel: daily ? `오늘의 판 · ${dateLabel}` : null,
+            title: "울타리 치기",
+          }}
+          url={shareUrl()}
+          text={`울타리 치기 ${puzzle.size}x${puzzle.size} · ${formatTime(mineMs)} · 이 기록을 깨 보세요`}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </section>
   );
 }
 
 export function FenceScreen({ params, navigate }: GameScreenProps) {
   const size = parseSize(params.size);
-  const daily = params.daily === "1";
-  // 오늘의 판의 날짜는 판을 여는 시점(daily나 size가 바뀔 때)에 한 번 정해 고정한다
-  const dateKey = useMemo(() => kstDateKey(Date.now()), [daily, size]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 오늘의 판의 날짜는 판을 여는 시점(주소가 바뀔 때)에 한 번 정해 고정한다
+  const dateKey = useMemo(() => kstDateKey(Date.now()), [params.daily, params.seed, size]); // eslint-disable-line react-hooks/exhaustive-deps
+  // daily=1이거나 seed가 오늘의 dailySeed와 같으면 오늘의 판. 다른 날짜의 daily- 시드는 자유 판이다
+  const daily = params.daily === "1" || params.seed === dailySeed(dateKey);
+  const challenge = useMemo(() => (params.seed && params.daily !== "1" ? parseChallenge(params) : null), [params]);
   // seed가 없으면 새 시드를 만들어 주소에 채운다(주소만 바꾸고 화면은 다시 열지 않는다)
   const [fallback] = useState(newSeed);
   const seed = daily ? dailySeed(dateKey) : params.seed || fallback;
@@ -262,6 +299,7 @@ export function FenceScreen({ params, navigate }: GameScreenProps) {
         dailyKey={daily ? dateKey : null}
         records={records}
         onRecords={setRecords}
+        challenge={challenge}
       />
       {rulesOpen && <Rules first={first} onClose={closeRules} />}
     </>
