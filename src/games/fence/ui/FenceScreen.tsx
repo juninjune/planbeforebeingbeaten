@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { GameScreenProps } from "../../../core/game";
+import { dailySeed, kstDateKey } from "../engine/daily";
 import { FIXED_PUZZLE } from "../engine/fixtures";
 import { generate } from "../engine/generator";
 import type { Puzzle, Size } from "../engine/grid";
@@ -7,6 +8,7 @@ import { solve } from "../engine/solver";
 import { nextHint } from "../engine/hint";
 import { initialState, reduce, type FenceAction } from "../engine/state";
 import { toHash } from "../../../app/route";
+import { applyCompletion, currentStreak, loadRecords, saveRecords, type FenceRecords, type SizeKey } from "../records";
 import { Board } from "./Board";
 import { hasSeenRules, markRulesSeen, Rules } from "./Rules";
 import "./fence.css";
@@ -47,9 +49,13 @@ interface PlayProps {
   /** 첫 방문 규칙 안내가 열려 있는 동안 타이머를 시작하지 않는다 */
   gate: boolean;
   onOpenRules: () => void;
+  /** 오늘의 판이면 그 날짜(화면을 연 시점에 고정), 자유 판이면 null */
+  dailyKey: string | null;
+  records: FenceRecords;
+  onRecords: (r: FenceRecords) => void;
 }
 
-function Play({ puzzle, solution, navigate, gate, onOpenRules }: PlayProps) {
+function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records, onRecords }: PlayProps) {
   const [state, dispatch] = useReducer((s: ReturnType<typeof initialState>, a: FenceAction) => reduce(puzzle, s, a), puzzle, initialState);
   const startRef = useRef(performance.now());
   const [elapsed, setElapsed] = useState(0);
@@ -60,6 +66,26 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules }: PlayProps) {
   const finalRef = useRef<number | null>(null);
   if (state.solved && finalRef.current === null) finalRef.current = performance.now() - startRef.current;
   const shown = finalRef.current ?? elapsed;
+
+  // 완성 기록은 완성되는 렌더에서 한 번 계산하고(순수), 저장은 효과에서 한다. 고정 퍼즐은 기록하지 않는다
+  const resultRef = useRef<ReturnType<typeof applyCompletion> | null>(null);
+  if (state.solved && resultRef.current === null && puzzle.seed !== "fixed") {
+    resultRef.current = applyCompletion(records, { size: puzzle.size, ms: Math.round(finalRef.current ?? 0), hints, dailyKey });
+  }
+  const result = resultRef.current;
+  const shownRecords = result?.records ?? records;
+  const sizeKey = String(puzzle.size) as SizeKey;
+  const sizeRec = shownRecords.sizes[sizeKey];
+  // 이미 푼 오늘의 판 안내는 열 때의 기록으로 정한다
+  const [doneAtOpen] = useState(() => (dailyKey ? (records.daily.done[dailyKey]?.[sizeKey]?.ms ?? null) : null));
+
+  useEffect(() => {
+    if (!result) return;
+    saveRecords(result.records);
+    onRecords(result.records);
+    // 완성 한 번에 한 번만
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
 
   useEffect(() => {
     if (state.solved || gate) return;
@@ -87,13 +113,24 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules }: PlayProps) {
     setHl((prev) => ({ edge: h.edge, id: (prev?.id ?? 0) + 1 }));
   };
 
-  const open = (size: Size) => navigate("/fence", { size: String(size), seed: newSeed() });
+  const daily = dailyKey !== null;
+  const open = (size: Size) => navigate("/fence", daily ? { size: String(size), daily: "1" } : { size: String(size), seed: newSeed() });
+  const openFree = (size: Size) => navigate("/fence", { size: String(size), seed: newSeed() });
+  const toggleDaily = () => (daily ? openFree(puzzle.size as Size) : navigate("/fence", { size: String(puzzle.size), daily: "1" }));
+  const dateLabel = dailyKey ? `${Number(dailyKey.slice(5, 7))}월 ${Number(dailyKey.slice(8, 10))}일` : "";
 
   return (
-    <section className="fence" data-testid="fence-screen" data-size={puzzle.size} data-seed={puzzle.seed} data-solved={state.solved ? "true" : "false"}>
+    <section className="fence" data-testid="fence-screen" data-size={puzzle.size} data-seed={puzzle.seed} data-solved={state.solved ? "true" : "false"} data-daily={daily ? "true" : "false"}>
       <div className="fence-lit" aria-hidden="true" />
       <header className="fence-head">
-        <h1>울타리 치기</h1>
+        <div className="fence-title">
+          <h1>울타리 치기</h1>
+          {daily && (
+            <span className="fence-daily-label" data-testid="daily-label">
+              오늘의 판 · {dateLabel}
+            </span>
+          )}
+        </div>
         <div className="fence-head-right">
           {hints > 0 && (
             <span className="fence-hint-count" data-testid="hint-count">
@@ -110,10 +147,21 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules }: PlayProps) {
       </header>
       <div className="fence-sizes">
         {SIZES.map((n) => (
-          <button key={n} type="button" data-testid={`size-${n}`} aria-pressed={puzzle.size === n} onClick={() => open(n)}>
+          <button
+            key={n}
+            type="button"
+            data-testid={`size-${n}`}
+            data-daily-done={daily ? String(records.daily.done[dailyKey]?.[String(n) as SizeKey] !== undefined) : undefined}
+            aria-pressed={puzzle.size === n}
+            onClick={() => open(n)}
+          >
             {n}x{n}
+            {daily && records.daily.done[dailyKey]?.[String(n) as SizeKey] !== undefined ? " ✓" : ""}
           </button>
         ))}
+        <button type="button" className="fence-daily-toggle" data-testid="daily-toggle" aria-pressed={daily} onClick={toggleDaily}>
+          오늘의 판
+        </button>
       </div>
       <Board puzzle={puzzle} marks={state.marks} solved={state.solved} highlightEdge={hl?.edge ?? null} onCycle={(edge) => dispatch({ type: "cycle", edge })} />
       <div className="fence-tools">
@@ -123,24 +171,48 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules }: PlayProps) {
         <button type="button" data-testid="clear" disabled={state.solved} onClick={() => dispatch({ type: "clear" })}>
           전체 지우기
         </button>
-        <button type="button" data-testid="hint" disabled={state.solved} onClick={giveHint}>
-          힌트
-        </button>
+        {!daily && (
+          <button type="button" data-testid="hint" disabled={state.solved} onClick={giveHint}>
+            힌트
+          </button>
+        )}
       </div>
+      <p className="fence-stats">
+        <span data-testid="best-time" data-empty={sizeRec.best === null ? "true" : "false"}>
+          최고 {sizeRec.best === null ? "-" : formatTime(sizeRec.best)}
+        </span>
+        <span aria-hidden="true"> · </span>
+        <span data-testid="solved-count" data-count={sizeRec.solved}>
+          푼 판 {sizeRec.solved}
+        </span>
+      </p>
+      {daily && doneAtOpen !== null && (
+        <p className="fence-daily-note" data-testid="daily-done-note">
+          오늘 이미 풀었습니다 · {formatTime(doneAtOpen)}
+        </p>
+      )}
       {state.solved && (
         <div className="fence-complete" data-testid="complete">
-          <h2>완성</h2>
+          <h2>
+            완성
+            {result?.newBest && (
+              <span className="fence-new-best" data-testid="new-best">
+                최고 기록
+              </span>
+            )}
+          </h2>
           <p>
             기록 <strong data-testid="record-time">{formatTime(shown)}</strong>
           </p>
-          {hints > 0 && (
-            <p className="fence-record-hints" data-testid="record-hints">
-              힌트 {hints}회 사용
-            </p>
-          )}
+          <p className="fence-record-meta">
+            {hints > 0 && <span data-testid="record-hints">힌트 {hints}회 사용</span>}
+            {daily && (
+              <span data-testid="daily-streak">연속 {currentStreak(shownRecords, dailyKey)}일</span>
+            )}
+          </p>
           <div className="fence-actions">
-            <button type="button" data-testid="new-game" onClick={() => open(puzzle.size)}>
-              새 판
+            <button type="button" data-testid="new-game" onClick={() => openFree(puzzle.size as Size)}>
+              {daily ? "자유 판" : "새 판"}
             </button>
             <button type="button" data-testid="to-lobby" onClick={() => navigate("/")}>
               로비로
@@ -154,16 +226,20 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules }: PlayProps) {
 
 export function FenceScreen({ params, navigate }: GameScreenProps) {
   const size = parseSize(params.size);
+  const daily = params.daily === "1";
+  // 오늘의 판의 날짜는 판을 여는 시점(daily나 size가 바뀔 때)에 한 번 정해 고정한다
+  const dateKey = useMemo(() => kstDateKey(Date.now()), [daily, size]); // eslint-disable-line react-hooks/exhaustive-deps
   // seed가 없으면 새 시드를 만들어 주소에 채운다(주소만 바꾸고 화면은 다시 열지 않는다)
   const [fallback] = useState(newSeed);
-  const seed = params.seed || fallback;
+  const seed = daily ? dailySeed(dateKey) : params.seed || fallback;
 
   useEffect(() => {
-    if (!params.seed) window.history.replaceState(null, "", toHash("/fence", { size: String(size), seed }));
-  }, [params.seed, size, seed]);
+    if (!daily && !params.seed) window.history.replaceState(null, "", toHash("/fence", { size: String(size), seed }));
+  }, [daily, params.seed, size, seed]);
 
   const puzzle = useMemo(() => (seed === "fixed" ? FIXED_PUZZLE : generate(size, seed)), [size, seed]);
   const solution = useMemo(() => solve(puzzle).solution ?? [], [puzzle]);
+  const [records, setRecords] = useState(loadRecords);
 
   // 첫 방문이면 규칙을 자동으로 열고, 닫는 순간 타이머가 시작된다
   const [first, setFirst] = useState(() => !hasSeenRules());
@@ -183,6 +259,9 @@ export function FenceScreen({ params, navigate }: GameScreenProps) {
         navigate={navigate}
         gate={first}
         onOpenRules={() => setRulesOpen(true)}
+        dailyKey={daily ? dateKey : null}
+        records={records}
+        onRecords={setRecords}
       />
       {rulesOpen && <Rules first={first} onClose={closeRules} />}
     </>

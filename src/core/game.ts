@@ -14,4 +14,6 @@ export interface GameDefinition {
   Screen: ComponentType<GameScreenProps>;
   /** 로비 카드에 보이는 작은 미리보기(선택) */
   Preview?: ComponentType;
+  /** 로비 카드 아래에 그려지는 추가 영역(선택). 예: 오늘의 판 진입 */
+  LobbyExtra?: ComponentType<{ navigate: GameScreenProps["navigate"] }>;
 }

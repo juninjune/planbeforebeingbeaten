@@ -148,3 +148,52 @@ button:focus-visible {
   stroke-linejoin: round;
   filter: drop-shadow(0 0 2px rgba(var(--light), 0.8));
 }
+
+.lobby-list > li + li {
+  margin-top: 12px;
+}
+
+/* 로비의 오늘의 판 줄 */
+.daily-entry {
+  margin-top: 8px;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 8px;
+}
+
+.daily-entry-title {
+  color: var(--ice);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+.daily-entry-streak {
+  font-size: 13px;
+  color: var(--accent);
+  text-align: right;
+}
+
+.daily-entry-streak[data-streak="0"] {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.daily-entry-buttons {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+}
+
+.daily-entry-buttons button {
+  flex: 1;
+}
+
+.daily-entry-buttons button[data-done="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}

@@ -19,6 +19,7 @@ export function Lobby({ games, navigate }: LobbyProps) {
                 <span>{g.tagline}</span>
               </span>
             </button>
+            {g.LobbyExtra && <g.LobbyExtra navigate={navigate} />}
           </li>
         ))}
       </ul>

@@ -384,3 +384,64 @@
     opacity: 0.9;
   }
 }
+
+/* 오늘의 판과 기록 */
+.fence-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fence-daily-label {
+  font-size: 12px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+.fence-sizes .fence-daily-toggle {
+  flex: 1.5;
+  font-size: 14px;
+  padding: 0 6px;
+}
+
+.fence-sizes button[data-daily-done="true"] {
+  color: var(--accent);
+}
+
+.fence-stats {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.fence-daily-note {
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.fence-new-best {
+  margin-left: 10px;
+  padding: 2px 8px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.fence-record-meta {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.fence-record-meta:empty {
+  display: none;
+}
