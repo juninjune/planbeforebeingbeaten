@@ -63,7 +63,7 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records
   const finalRef = useRef<number | null>(null);
   if (state.solved && finalRef.current === null) finalRef.current = performance.now() - startRef.current;
   const shown = finalRef.current ?? elapsed;
-  const mineMs = Math.round(finalRef.current ?? 0);
+  const mineMs = Math.floor(finalRef.current ?? 0);
   const [shareOpen, setShareOpen] = useState(false);
 
   // 완성 기록은 완성되는 렌더에서 한 번 계산하고(순수), 저장은 효과에서 한다. 고정 퍼즐은 기록하지 않는다
