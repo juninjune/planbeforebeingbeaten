@@ -20,9 +20,9 @@
   <path d="M140 155H332V219H396V283H460V475H396V411H332V347H268V283H204V219H140Z" fill="none" stroke="#9fd8ff" stroke-width="16" stroke-linejoin="round" opacity="0.55" filter="url(#glow)"/>
   <path d="M140 155H332V219H396V283H460V475H396V411H332V347H268V283H204V219H140Z" fill="none" stroke="#eef7ff" stroke-width="12" stroke-linejoin="round"/>
   <g font-family="-apple-system, 'Apple SD Gothic Neo', 'Pretendard', sans-serif">
-    <text x="580" y="262" font-size="112" font-weight="800" fill="#f2f8ff" letter-spacing="-2">두뇌 퍼즐</text>
-    <text x="584" y="340" font-size="42" font-weight="600" fill="#6fd8c8">울타리 치기 · 오늘의 판</text>
-    <text x="584" y="402" font-size="32" font-weight="500" fill="#93a4b2">가입 없이 바로 풀고, 기록에 도전하세요</text>
-    <text x="584" y="500" font-size="30" font-weight="600" fill="#5f7384" letter-spacing="1">puzzle.pinballz.kr</text>
+    <text x="580" y="262" font-size="112" font-weight="800" fill="#f2f8ff" letter-spacing="-2">울타리 치기</text>
+    <text x="584" y="340" font-size="42" font-weight="600" fill="#6fd8c8">매일 새로운 판 · 기록 도전</text>
+    <text x="584" y="402" font-size="32" font-weight="500" fill="#93a4b2">점을 이어 하나의 고리를 만드세요</text>
+    <text x="584" y="500" font-size="30" font-weight="600" fill="#5f7384" letter-spacing="1">두뇌 퍼즐 · puzzle.pinballz.kr</text>
   </g>
 </svg>
