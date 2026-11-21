@@ -57,10 +57,15 @@ body {
   margin: 0 auto;
 }
 
-.disclaimer {
-  padding: 12px 16px;
+.app-footer {
+  padding: 8px 16px 10px;
   text-align: center;
-  font-size: 12px;
+}
+
+.disclaimer {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
   color: var(--muted);
 }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 사용법: e2e/run.sh [시나리오...]   (시나리오: fixed 5 7 10 rules hints daily share, 기본은 전부)
+# 사용법: e2e/run.sh [시나리오...]   (시나리오: fixed 5 7 10 rules hints daily share stats, 기본은 전부)
 # BASE_URL 기본값은 http://localhost:5173. 서버가 없으면 pnpm dev를 띄웠다가 끝날 때 종료한다.
 set -u
 
@@ -9,7 +9,7 @@ SHOTS="$ROOT/e2e/screenshots"
 mkdir -p "$SHOTS"
 
 SCENARIOS=("$@")
-[ ${#SCENARIOS[@]} -eq 0 ] && SCENARIOS=(fixed 5 7 10 rules hints daily share)
+[ ${#SCENARIOS[@]} -eq 0 ] && SCENARIOS=(fixed 5 7 10 rules hints daily share stats)
 
 DEV_PID=""
 cleanup() {
@@ -45,6 +45,7 @@ for sc in "${SCENARIOS[@]}"; do
     hints) QUERY=""; LABEL="fence-hints"; SCRIPT="$ROOT/e2e/hints.e2e.js" ;;
     daily) QUERY=""; LABEL="fence-daily"; SCRIPT="$ROOT/e2e/daily.e2e.js" ;;
     share) QUERY=""; LABEL="fence-share"; SCRIPT="$ROOT/e2e/share.e2e.js" ;;
+    stats) QUERY=""; LABEL="fence-stats"; SCRIPT="$ROOT/e2e/stats.e2e.js" ;;
     *) echo "알 수 없는 시나리오: $sc"; ALL_OK=0; continue ;;
   esac
 

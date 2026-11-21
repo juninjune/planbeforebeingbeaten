@@ -8,6 +8,7 @@ import { solve } from "../engine/solver";
 import { nextHint } from "../engine/hint";
 import { initialState, reduce, type FenceAction } from "../engine/state";
 import { toHash } from "../../../app/route";
+import { trackEvent } from "../../../core/analytics";
 import { buildShareParams, judgeChallenge, parseChallenge, type Challenge } from "../challenge";
 import { formatTime } from "../format";
 import { applyCompletion, currentStreak, loadRecords, saveRecords, type FenceRecords, type SizeKey } from "../records";
@@ -92,6 +93,23 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records
     return () => window.clearInterval(id);
   }, [state.solved, gate]);
 
+  // 통계 이벤트: ref로 막아 같은 판에서 한 번만 보낸다(개발 중 효과 이중 실행 포함)
+  const sizeN = puzzle.size;
+  const startedRef = useRef(false);
+  const completeSentRef = useRef(false);
+  const hintSentRef = useRef(false);
+  useEffect(() => {
+    if (gate || startedRef.current) return;
+    startedRef.current = true;
+    trackEvent(`fence/start/${sizeN}`);
+  }, [gate, sizeN]);
+  useEffect(() => {
+    if (!state.solved || completeSentRef.current) return;
+    completeSentRef.current = true;
+    trackEvent(`fence/complete/${sizeN}`);
+    if (dailyKey !== null && doneAtOpen === null) trackEvent(`fence/daily-complete/${sizeN}`);
+  }, [state.solved, sizeN, dailyKey, doneAtOpen]);
+
   useEffect(() => {
     if (!hl) return;
     const id = window.setTimeout(() => setHl(null), 1200);
@@ -106,6 +124,10 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records
   const giveHint = () => {
     const h = nextHint(puzzle.size, state.marks, solution);
     if (!h) return;
+    if (!hintSentRef.current) {
+      hintSentRef.current = true;
+      trackEvent(`fence/hint/${sizeN}`);
+    }
     dispatch({ type: "set", edge: h.edge, mark: h.mark });
     setHints((n) => n + 1);
     setHl((prev) => ({ edge: h.edge, id: (prev?.id ?? 0) + 1 }));
@@ -230,7 +252,10 @@ function Play({ puzzle, solution, navigate, gate, onOpenRules, dailyKey, records
             <button type="button" data-testid="new-game" onClick={() => openFree(puzzle.size as Size)}>
               {daily ? "자유 판" : "새 판"}
             </button>
-            <button type="button" data-testid="share" onClick={() => setShareOpen(true)}>
+            <button type="button" data-testid="share" onClick={() => {
+                trackEvent(`fence/share/${sizeN}`);
+                setShareOpen(true);
+              }}>
               공유
             </button>
             <button type="button" data-testid="to-lobby" onClick={() => navigate("/")}>
