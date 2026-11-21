@@ -79,7 +79,7 @@ export function ShareSheet({ card, url, text, onClose }: ShareSheetProps) {
         <img className="share-card" data-testid="result-card" src={png} alt="결과 카드" />
         <img data-testid="share-card-safe" src={sharePng} alt="" hidden />
         <p className="share-note" data-testid="share-note">
-          공유하면 정답을 가린 카드가 전송됩니다. 이미지 저장은 정답이 보이는 카드입니다.
+          공유하면 정답을 가린 카드가 전송됩니다.
         </p>
         <input
           ref={inputRef}
