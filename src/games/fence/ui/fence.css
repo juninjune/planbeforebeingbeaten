@@ -1,0 +1,220 @@
+.fence {
+  position: relative;
+}
+
+/* 완성 후 한 단계 더 밝아지는 무대 조명 */
+.fence-lit {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse 85% 60% at 50% 34%, rgba(var(--light), 0.34), rgba(var(--light), 0.1) 55%, transparent 82%);
+  transition: opacity 0.8s ease 0.9s;
+}
+
+.fence[data-solved="true"] .fence-lit {
+  opacity: 1;
+}
+
+.fence-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.fence-head h1 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ice);
+  margin: 0;
+}
+
+.fence-timer {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.fence-sizes {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.fence-sizes button {
+  flex: 1;
+}
+
+.fence-sizes button[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 조명 아래 살짝 떠 있는 어두운 판 */
+.fence-board {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  margin: 12px auto;
+  touch-action: manipulation;
+  background: #0a1016;
+  border: 1px solid var(--panel-edge);
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7), 0 0 60px rgba(var(--light), 0.1);
+}
+
+.fence-clue {
+  fill: #cfe6f5;
+  font-size: 46px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  user-select: none;
+  transition: fill 0.15s;
+}
+
+.fence-clue[data-clue-state="met"] {
+  fill: #566472;
+}
+
+.fence-clue[data-clue-state="over"] {
+  fill: #e0675f;
+}
+
+.fence-dot {
+  fill: #5e7280;
+  pointer-events: none;
+}
+
+.fence-line {
+  stroke: var(--ice);
+  stroke-width: 11;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  filter: drop-shadow(0 0 4px rgba(var(--light), 0.7));
+  pointer-events: none;
+  animation: fence-draw 0.12s ease-out;
+  transition: stroke 0.5s ease 0.9s, filter 0.5s ease 0.9s;
+}
+
+.fence-board[data-solved="true"] .fence-line {
+  stroke: #ffffff;
+  filter: drop-shadow(0 0 8px rgba(var(--light), 1));
+}
+
+.fence-x {
+  stroke: #8a4a47;
+  stroke-width: 5;
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.fence-hit {
+  fill: transparent;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+/* 완성: 고리를 따라 도는 빛 */
+.fence-reveal {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+  filter: drop-shadow(0 0 10px rgba(var(--light), 1)) drop-shadow(0 0 22px rgba(var(--light), 0.7));
+  pointer-events: none;
+  animation: fence-reveal 0.9s ease-in-out;
+}
+
+.fence-tools {
+  display: flex;
+  gap: 8px;
+}
+
+.fence-tools button {
+  flex: 1;
+}
+
+.fence-complete {
+  margin-top: 12px;
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  animation: fence-panel-in 0.45s ease-out 1.4s both;
+}
+
+.fence-complete h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--ice);
+}
+
+.fence-complete p {
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+.fence-complete strong {
+  display: inline-block;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ice);
+  text-shadow: 0 0 12px rgba(var(--light), 0.8);
+  animation: fence-stamp 0.25s ease-out 1.7s both;
+}
+
+.fence-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+@keyframes fence-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes fence-reveal {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes fence-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    pointer-events: none;
+  }
+}
+
+@keyframes fence-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fence-line,
+  .fence-reveal,
+  .fence-complete,
+  .fence-complete strong {
+    animation: none;
+  }
+  .fence-line,
+  .fence-lit,
+  .fence-clue {
+    transition: none;
+  }
+}
