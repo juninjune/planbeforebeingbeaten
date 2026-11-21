@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <radialGradient id="stage" cx="30%" cy="48%" r="75%">
+      <stop offset="0" stop-color="#1d2c39"/>
+      <stop offset="0.45" stop-color="#0b1117"/>
+      <stop offset="1" stop-color="#04060a"/>
+    </radialGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#stage)"/>
+  <rect x="96" y="111" width="408" height="408" rx="28" fill="#090e13" stroke="#22303b" stroke-width="2"/>
+  <g fill="#566a7a"><circle cx="140" cy="155" r="5"/><circle cx="204" cy="155" r="5"/><circle cx="268" cy="155" r="5"/><circle cx="332" cy="155" r="5"/><circle cx="396" cy="155" r="5"/><circle cx="460" cy="155" r="5"/><circle cx="140" cy="219" r="5"/><circle cx="204" cy="219" r="5"/><circle cx="268" cy="219" r="5"/><circle cx="332" cy="219" r="5"/><circle cx="396" cy="219" r="5"/><circle cx="460" cy="219" r="5"/><circle cx="140" cy="283" r="5"/><circle cx="204" cy="283" r="5"/><circle cx="268" cy="283" r="5"/><circle cx="332" cy="283" r="5"/><circle cx="396" cy="283" r="5"/><circle cx="460" cy="283" r="5"/><circle cx="140" cy="347" r="5"/><circle cx="204" cy="347" r="5"/><circle cx="268" cy="347" r="5"/><circle cx="332" cy="347" r="5"/><circle cx="396" cy="347" r="5"/><circle cx="460" cy="347" r="5"/><circle cx="140" cy="411" r="5"/><circle cx="204" cy="411" r="5"/><circle cx="268" cy="411" r="5"/><circle cx="332" cy="411" r="5"/><circle cx="396" cy="411" r="5"/><circle cx="460" cy="411" r="5"/><circle cx="140" cy="475" r="5"/><circle cx="204" cy="475" r="5"/><circle cx="268" cy="475" r="5"/><circle cx="332" cy="475" r="5"/><circle cx="396" cy="475" r="5"/><circle cx="460" cy="475" r="5"/></g>
+  <g font-family="-apple-system, 'Apple SD Gothic Neo', 'Pretendard', sans-serif" font-weight="700" font-size="34" fill="#6f8494" text-anchor="middle">
+    <text x="172" y="199">3</text><text x="364" y="199">2</text><text x="428" y="263">2</text>
+    <text x="172" y="391">0</text><text x="300" y="327">2</text><text x="428" y="455">3</text><text x="236" y="199">1</text>
+  </g>
+  <path d="M140 155H332V219H396V283H460V475H396V411H332V347H268V283H204V219H140Z" fill="none" stroke="#9fd8ff" stroke-width="16" stroke-linejoin="round" opacity="0.55" filter="url(#glow)"/>
+  <path d="M140 155H332V219H396V283H460V475H396V411H332V347H268V283H204V219H140Z" fill="none" stroke="#eef7ff" stroke-width="12" stroke-linejoin="round"/>
+  <g font-family="-apple-system, 'Apple SD Gothic Neo', 'Pretendard', sans-serif">
+    <text x="580" y="262" font-size="112" font-weight="800" fill="#f2f8ff" letter-spacing="-2">두뇌 퍼즐</text>
+    <text x="584" y="340" font-size="42" font-weight="600" fill="#6fd8c8">울타리 치기 · 오늘의 판</text>
+    <text x="584" y="402" font-size="32" font-weight="500" fill="#93a4b2">가입 없이 바로 풀고, 기록에 도전하세요</text>
+    <text x="584" y="500" font-size="30" font-weight="600" fill="#5f7384" letter-spacing="1">puzzle.pinballz.kr</text>
+  </g>
+</svg>
