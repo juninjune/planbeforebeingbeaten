@@ -218,3 +218,169 @@
     transition: none;
   }
 }
+
+/* 헤더 오른쪽: 힌트 횟수, 타이머, 규칙 */
+.fence-head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fence-head-right .fence-rules-btn {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.fence-hint-count {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* 힌트로 바뀐 변 강조 */
+.fence-hint {
+  stroke: var(--accent);
+  stroke-width: 16;
+  stroke-linecap: round;
+  opacity: 0;
+  filter: drop-shadow(0 0 8px rgba(79, 209, 197, 0.9)) drop-shadow(0 0 18px rgba(79, 209, 197, 0.6));
+  pointer-events: none;
+  animation: fence-hint-pulse 1.2s ease-in-out;
+}
+
+@keyframes fence-hint-pulse {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  25%,
+  75% {
+    opacity: 0.95;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.fence-record-hints {
+  font-size: 13px;
+}
+
+/* 규칙 시트 */
+.rules-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.rules-sheet {
+  width: 100%;
+  max-width: 540px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 18px 16px 16px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6), 0 0 50px rgba(var(--light), 0.08);
+  animation: rules-up 0.25s ease-out;
+}
+
+.rules-sheet h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--ice);
+}
+
+.rules-list {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rules-list li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rules-list p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.rules-art {
+  flex: none;
+  width: 64px;
+  height: 56px;
+  background: #0a1016;
+  border: 1px solid var(--panel-edge);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.rules-art-wide {
+  width: 96px;
+}
+
+.rules-dot {
+  fill: #6b7f8e;
+}
+
+.rules-line,
+.rules-loop {
+  stroke: var(--ice);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 2px rgba(var(--light), 0.8));
+}
+
+.rules-loop {
+  fill: none;
+}
+
+.rules-x {
+  stroke: #8a4a47;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.rules-clue {
+  fill: #cfe6f5;
+  font-size: 13px;
+}
+
+.rules-close {
+  width: 100%;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@keyframes rules-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rules-sheet,
+  .fence-hint {
+    animation: none;
+  }
+  .fence-hint {
+    opacity: 0.9;
+  }
+}

@@ -18,6 +18,12 @@ const e2eMain = async () => {
       }
       fail(what);
     };
+    const closeRulesIfOpen = async () => {
+      if (await page.locator('[data-testid="rules"]').count() > 0) {
+        await page.locator('[data-testid="rules-close"]').click();
+        await waitUntil(async () => await page.locator('[data-testid="rules"]').count() === 0, '규칙 시트가 닫히지 않음');
+      }
+    };
     const attr = (sel, name) => page.evaluate(([s, n]) => { const el = document.querySelector(s); return el ? el.getAttribute(n) : null; }, [sel, name]);
     const q = new URLSearchParams(QUERY);
     const wantSeed = q.get('seed');
@@ -28,6 +34,7 @@ const e2eMain = async () => {
     check(await page.locator('[data-testid="disclaimer"]').count() === 1, '로비에 고지가 없음');
     await page.locator('[data-testid="game-fence"]').click();
     await page.waitForSelector('[data-testid="fence-screen"]', { timeout: 10000 }).catch(() => fail('게임 화면이 열리지 않음'));
+    await closeRulesIfOpen();
     check(await attr('[data-testid="fence-screen"]', 'data-size') === '7', '기본 크기가 7이 아님');
     const filledHash = await page.evaluate(() => window.location.hash);
     check(/seed=[a-z0-9]{6,8}$/.test(filledHash) && filledHash.includes('size=7'), '주소에 seed가 채워지지 않음: ' + filledHash);
@@ -104,6 +111,24 @@ const e2eMain = async () => {
     await page.locator('[data-testid="clear"]').click();
     check((await dataMarks()).every((m) => m === '0'), '전체 지우기 뒤에 data-mark가 모두 0이 아님');
 
+    // 힌트: 빈 판에서 한 번 누르면 정답 변 하나가 선이 된다
+    const lineEdges = () => page.evaluate(() => Array.from(document.querySelectorAll('[data-edge][data-mark="1"]')).map((el) => Number(el.getAttribute('data-edge'))));
+    await page.locator('[data-testid="hint"]').click();
+    const afterHint = await lineEdges();
+    check(afterHint.length === 1 && solution.includes(afterHint[0]), '힌트가 정답 변 하나를 긋지 않음: ' + JSON.stringify(afterHint));
+    check(((await page.locator('[data-testid="hint-count"]').textContent()) || '').includes('1'), 'hint-count가 1이 아님');
+    check(await page.locator('[data-testid="hint"][disabled]').count() === 0, '힌트 버튼이 비활성');
+    // 틀린 변을 긋고 힌트를 누르면 그 변이 지워진다
+    let wrongEdge = 0;
+    while (solution.includes(wrongEdge)) wrongEdge++;
+    await press([wrongEdge]);
+    check(await markOf(wrongEdge) === '1', '틀린 변이 그어지지 않음');
+    await page.locator('[data-testid="hint"]').click();
+    check(await markOf(wrongEdge) === '0', '힌트가 틀린 선을 지우지 않음');
+    check(((await page.locator('[data-testid="hint-count"]').textContent()) || '').includes('2'), 'hint-count가 2가 아님');
+    await page.locator('[data-testid="clear"]').click();
+    check((await dataMarks()).every((m) => m === '0'), '힌트 뒤 전체 지우기 실패');
+
     // 오답 1: 숫자가 있는 칸 하나의 네 변을 모두 선으로 -> 닫힌 고리지만 숫자 불일치
     const cellIdx = clues.findIndex((v) => v !== null && v !== 4);
     check(cellIdx >= 0, '숫자 칸이 없음');
@@ -135,6 +160,8 @@ const e2eMain = async () => {
     await sleep(2200); // 완성 연출이 끝나길 기다린다
     const completeIn = await page.evaluate(() => { const b = document.querySelector('[data-testid="complete"]').getBoundingClientRect(); return b.bottom <= window.innerHeight; });
     check(completeIn, '완성 화면이 한 화면 안에 보이지 않음');
+    const recHints = ((await page.locator('[data-testid="record-hints"]').textContent()) || '');
+    check(recHints.includes('2'), '완성 패널에 힌트 사용 횟수가 없음: ' + recHints);
     await shot('complete');
 
     // 완성 후 입력 무시

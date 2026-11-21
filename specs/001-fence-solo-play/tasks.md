@@ -124,3 +124,19 @@ description: "울타리 치기 1인 플레이 작업 목록"
 - Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 순서로 진행한다.
 - 각 Phase의 Checkpoint가 통과하지 않으면 다음 Phase로 가지 않는다.
 - Phase 3이 끝나면 고정 퍼즐로 플레이할 수 있는 최소 버전이 된다.
+
+---
+
+## Phase 8: User Story 5 - 풀이 도우미 (Priority: P5)
+
+**Goal**: 처음 온 사람이 규칙을 알고, 막혔을 때 힌트로 한 걸음 나아갈 수 있다.
+
+**Independent Test**: 리듀서 테스트 통과, e2e에서 규칙 안내와 힌트 확인 뒤 기존 흐름이 그대로 통과한다.
+
+- [x] T032 [US5] `state.ts`에 `{ type: "set", edge, mark }` 행동을 추가하고 테스트한다 (기록에 남고 판정 갱신)
+- [x] T033 [US5] `src/games/fence/engine/hint.ts`: 정답과 현재 표시를 받아 다음 힌트(고칠 변과 값)를 고르는 순수 함수와 테스트
+- [x] T034 [US5] `FenceScreen.tsx`: 힌트 버튼(`hint`), 힌트로 바뀐 변 강조, 사용 횟수 표시(`hint-count`), 완성 화면에 힌트 횟수
+- [x] T035 [US5] `src/games/fence/ui/Rules.tsx`: 규칙 안내 시트(`rules`, `rules-open`, `rules-close`). 첫 방문 때 자동으로 열리고 닫으면 타이머가 시작된다
+- [x] T036 [US5] e2e에 규칙 안내와 힌트 확인을 추가한다
+
+**Checkpoint**: `pnpm test` 통과, `e2e/run.sh` 세 크기 `E2E PASS`.

@@ -8,7 +8,11 @@ export interface FenceState {
   solved: boolean;
 }
 
-export type FenceAction = { type: "cycle"; edge: number } | { type: "undo" } | { type: "clear" };
+export type FenceAction =
+  | { type: "cycle"; edge: number }
+  | { type: "set"; edge: number; mark: EdgeMark }
+  | { type: "undo" }
+  | { type: "clear" };
 
 export function initialState(puzzle: Puzzle): FenceState {
   return { marks: new Array<EdgeMark>(edgeCount(puzzle.size)).fill(0), history: [], solved: false };
@@ -24,6 +28,16 @@ export function reduce(puzzle: Puzzle, state: FenceState, action: FenceAction): 
       const next = ((prev + 1) % 3) as EdgeMark;
       const marks = state.marks.slice();
       marks[edge] = next;
+      return { marks, history: [...state.history, { edge, prev }], solved: isSolved(puzzle, marks) };
+    }
+    case "set": {
+      const { edge, mark } = action;
+      if (!Number.isInteger(edge) || edge < 0 || edge >= state.marks.length) return state;
+      if (mark !== 0 && mark !== 1 && mark !== 2) return state;
+      const prev = state.marks[edge]!;
+      if (prev === mark) return state;
+      const marks = state.marks.slice();
+      marks[edge] = mark;
       return { marks, history: [...state.history, { edge, prev }], solved: isSolved(puzzle, marks) };
     }
     case "undo": {

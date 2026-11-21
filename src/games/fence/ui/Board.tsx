@@ -5,6 +5,8 @@ interface BoardProps {
   puzzle: Puzzle;
   marks: readonly EdgeMark[];
   solved: boolean;
+  /** 힌트로 바뀐 변. 잠시 강조한다 */
+  highlightEdge?: number | null;
   onCycle: (edge: number) => void;
 }
 
@@ -38,7 +40,7 @@ function sideCenters(size: number, edge: number): [[number, number], [number, nu
   ];
 }
 
-export function Board({ puzzle, marks, solved, onCycle }: BoardProps) {
+export function Board({ puzzle, marks, solved, highlightEdge = null, onCycle }: BoardProps) {
   const { size, clues } = puzzle;
   const total = size * U + MARGIN * 2;
   const edges = Array.from({ length: edgeCount(size) }, (_, i) => i);
@@ -116,6 +118,13 @@ export function Board({ puzzle, marks, solved, onCycle }: BoardProps) {
         return <circle key={`dot-${p}`} className="fence-dot" cx={x} cy={y} r={5} />;
       })}
 
+      {highlightEdge !== null && (() => {
+        const [a, b] = edgeEnds(size, highlightEdge);
+        const [x1, y1] = pointXY(size, a);
+        const [x2, y2] = pointXY(size, b);
+        return <line key={`hint-${highlightEdge}`} className="fence-hint" x1={x1} y1={y1} x2={x2} y2={y2} />;
+      })()}
+
       {edges.map((e) => {
         const [a, b] = edgeEnds(size, e);
         const [ca, cb] = sideCenters(size, e);
@@ -128,6 +137,7 @@ export function Board({ puzzle, marks, solved, onCycle }: BoardProps) {
             className="fence-hit"
             data-edge={e}
             data-mark={marks[e]}
+            data-hint={e === highlightEdge ? "true" : undefined}
             points={points}
             onClick={() => onCycle(e)}
           />

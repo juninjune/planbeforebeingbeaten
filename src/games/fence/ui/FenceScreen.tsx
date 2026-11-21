@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { GameScreenProps } from "../../../core/game";
 import { FIXED_PUZZLE } from "../engine/fixtures";
 import { generate } from "../engine/generator";
 import type { Puzzle, Size } from "../engine/grid";
 import { solve } from "../engine/solver";
+import { nextHint } from "../engine/hint";
 import { initialState, reduce, type FenceAction } from "../engine/state";
 import { toHash } from "../../../app/route";
 import { Board } from "./Board";
+import { hasSeenRules, markRulesSeen, Rules } from "./Rules";
 import "./fence.css";
 
 declare global {
@@ -38,10 +40,21 @@ function newSeed(): string {
   return Array.from(bytes, (b) => SEED_CHARS[b % SEED_CHARS.length]).join("");
 }
 
-function Play({ puzzle, navigate }: { puzzle: Puzzle; navigate: GameScreenProps["navigate"] }) {
+interface PlayProps {
+  puzzle: Puzzle;
+  solution: number[];
+  navigate: GameScreenProps["navigate"];
+  /** 첫 방문 규칙 안내가 열려 있는 동안 타이머를 시작하지 않는다 */
+  gate: boolean;
+  onOpenRules: () => void;
+}
+
+function Play({ puzzle, solution, navigate, gate, onOpenRules }: PlayProps) {
   const [state, dispatch] = useReducer((s: ReturnType<typeof initialState>, a: FenceAction) => reduce(puzzle, s, a), puzzle, initialState);
   const startRef = useRef(performance.now());
   const [elapsed, setElapsed] = useState(0);
+  const [hints, setHints] = useState(0);
+  const [hl, setHl] = useState<{ edge: number; id: number } | null>(null);
 
   // 완성되는 렌더에서 곧바로 기록을 고정한다(완성 화면 텍스트가 즉시 채워지도록)
   const finalRef = useRef<number | null>(null);
@@ -49,15 +62,30 @@ function Play({ puzzle, navigate }: { puzzle: Puzzle; navigate: GameScreenProps[
   const shown = finalRef.current ?? elapsed;
 
   useEffect(() => {
-    if (state.solved) return;
+    if (state.solved || gate) return;
+    startRef.current = performance.now();
     const id = window.setInterval(() => setElapsed(performance.now() - startRef.current), 100);
     return () => window.clearInterval(id);
-  }, [state.solved]);
+  }, [state.solved, gate]);
+
+  useEffect(() => {
+    if (!hl) return;
+    const id = window.setTimeout(() => setHl(null), 1200);
+    return () => window.clearTimeout(id);
+  }, [hl]);
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
-    window.__fence = { size: puzzle.size, seed: puzzle.seed, clues: puzzle.clues, solution: solve(puzzle).solution ?? [] };
-  }, [puzzle]);
+    window.__fence = { size: puzzle.size, seed: puzzle.seed, clues: puzzle.clues, solution };
+  }, [puzzle, solution]);
+
+  const giveHint = () => {
+    const h = nextHint(puzzle.size, state.marks, solution);
+    if (!h) return;
+    dispatch({ type: "set", edge: h.edge, mark: h.mark });
+    setHints((n) => n + 1);
+    setHl((prev) => ({ edge: h.edge, id: (prev?.id ?? 0) + 1 }));
+  };
 
   const open = (size: Size) => navigate("/fence", { size: String(size), seed: newSeed() });
 
@@ -66,9 +94,19 @@ function Play({ puzzle, navigate }: { puzzle: Puzzle; navigate: GameScreenProps[
       <div className="fence-lit" aria-hidden="true" />
       <header className="fence-head">
         <h1>울타리 치기</h1>
-        <span className="fence-timer" data-testid="timer">
-          {formatTime(shown)}
-        </span>
+        <div className="fence-head-right">
+          {hints > 0 && (
+            <span className="fence-hint-count" data-testid="hint-count">
+              힌트 {hints}
+            </span>
+          )}
+          <span className="fence-timer" data-testid="timer">
+            {formatTime(shown)}
+          </span>
+          <button type="button" className="fence-rules-btn" data-testid="rules-open" onClick={onOpenRules}>
+            규칙
+          </button>
+        </div>
       </header>
       <div className="fence-sizes">
         {SIZES.map((n) => (
@@ -77,13 +115,16 @@ function Play({ puzzle, navigate }: { puzzle: Puzzle; navigate: GameScreenProps[
           </button>
         ))}
       </div>
-      <Board puzzle={puzzle} marks={state.marks} solved={state.solved} onCycle={(edge) => dispatch({ type: "cycle", edge })} />
+      <Board puzzle={puzzle} marks={state.marks} solved={state.solved} highlightEdge={hl?.edge ?? null} onCycle={(edge) => dispatch({ type: "cycle", edge })} />
       <div className="fence-tools">
         <button type="button" data-testid="undo" disabled={state.solved || state.history.length === 0} onClick={() => dispatch({ type: "undo" })}>
           되돌리기
         </button>
         <button type="button" data-testid="clear" disabled={state.solved} onClick={() => dispatch({ type: "clear" })}>
           전체 지우기
+        </button>
+        <button type="button" data-testid="hint" disabled={state.solved} onClick={giveHint}>
+          힌트
         </button>
       </div>
       {state.solved && (
@@ -92,6 +133,11 @@ function Play({ puzzle, navigate }: { puzzle: Puzzle; navigate: GameScreenProps[
           <p>
             기록 <strong data-testid="record-time">{formatTime(shown)}</strong>
           </p>
+          {hints > 0 && (
+            <p className="fence-record-hints" data-testid="record-hints">
+              힌트 {hints}회 사용
+            </p>
+          )}
           <div className="fence-actions">
             <button type="button" data-testid="new-game" onClick={() => open(puzzle.size)}>
               새 판
@@ -117,5 +163,28 @@ export function FenceScreen({ params, navigate }: GameScreenProps) {
   }, [params.seed, size, seed]);
 
   const puzzle = useMemo(() => (seed === "fixed" ? FIXED_PUZZLE : generate(size, seed)), [size, seed]);
-  return <Play key={`${puzzle.size}:${puzzle.seed}`} puzzle={puzzle} navigate={navigate} />;
+  const solution = useMemo(() => solve(puzzle).solution ?? [], [puzzle]);
+
+  // 첫 방문이면 규칙을 자동으로 열고, 닫는 순간 타이머가 시작된다
+  const [first, setFirst] = useState(() => !hasSeenRules());
+  const [rulesOpen, setRulesOpen] = useState(first);
+  const closeRules = useCallback(() => {
+    markRulesSeen();
+    setRulesOpen(false);
+    setFirst(false);
+  }, []);
+
+  return (
+    <>
+      <Play
+        key={`${puzzle.size}:${puzzle.seed}`}
+        puzzle={puzzle}
+        solution={solution}
+        navigate={navigate}
+        gate={first}
+        onOpenRules={() => setRulesOpen(true)}
+      />
+      {rulesOpen && <Rules first={first} onClose={closeRules} />}
+    </>
+  );
 }

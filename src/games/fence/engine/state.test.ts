@@ -139,3 +139,42 @@ describe("reduce clear", () => {
     expect(s.solved).toBe(true);
   });
 });
+
+describe("reduce set", () => {
+  it("지정한 값으로 바꾸고 기록에 넣는다", () => {
+    let s = initialState(P);
+    s = reduce(P, s, { type: "set", edge: 3, mark: 2 });
+    expect(s.marks[3]).toBe(2);
+    expect(s.history).toEqual([{ edge: 3, prev: 0 }]);
+    s = reduce(P, s, { type: "undo" });
+    expect(s.marks[3]).toBe(0);
+  });
+
+  it("값이 같으면 상태를 그대로 돌려준다", () => {
+    const s = initialState(P);
+    expect(reduce(P, s, { type: "set", edge: 3, mark: 0 })).toBe(s);
+  });
+
+  it("범위 밖 변과 잘못된 값은 무시한다", () => {
+    const s = initialState(P);
+    expect(reduce(P, s, { type: "set", edge: -1, mark: 1 })).toBe(s);
+    expect(reduce(P, s, { type: "set", edge: 60, mark: 1 })).toBe(s);
+    expect(reduce(P, s, { type: "set", edge: 1.5, mark: 1 })).toBe(s);
+    expect(reduce(P, s, { type: "set", edge: 1, mark: 3 as never })).toBe(s);
+  });
+
+  it("정답을 모두 set하면 solved가 되고 이후 무시한다", () => {
+    let s = initialState(P);
+    for (const e of FIXED_SOLUTION) s = reduce(P, s, { type: "set", edge: e, mark: 1 });
+    expect(s.solved).toBe(true);
+    expect(reduce(P, s, { type: "set", edge: 4, mark: 1 })).toBe(s);
+  });
+
+  it("입력 상태를 바꾸지 않는다", () => {
+    const s = initialState(P);
+    const snapshot = JSON.stringify(s);
+    const next = reduce(P, s, { type: "set", edge: 5, mark: 1 });
+    expect(JSON.stringify(s)).toBe(snapshot);
+    expect(next.marks).not.toBe(s.marks);
+  });
+});
