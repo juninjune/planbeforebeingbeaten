@@ -8,7 +8,7 @@ interface LobbyProps {
 export function Lobby({ games, navigate }: LobbyProps) {
   return (
     <section className="lobby" data-testid="lobby">
-      <h1>두뇌 퍼즐 모음</h1>
+      <h1>두뇌 퍼즐</h1>
       <ul className="lobby-list">
         {games.map((g) => (
           <li key={g.id}>

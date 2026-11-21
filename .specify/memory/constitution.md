@@ -1,19 +1,7 @@
-<!--
-Sync Impact Report
-- Version change: (템플릿) → 1.0.0 (최초 비준)
-- Modified principles: 없음 (최초 작성)
-- Added sections: Core Principles I부터 V, 게임 규칙 기준, 개발 워크플로, Governance
-- Removed sections: 없음
-- Follow-up TODOs:
-  - TODO(SERVICE_NAME): 서비스 표시명 미정. 현재는 저장소명(planbeforebeingbeaten)을 작업명으로 사용.
-  - 고유명사성 게임의 표시명은 해당 게임 spec 작성 전에 오너 확정 필요.
--->
-
 # planbeforebeingbeaten Constitution
 
 TV 두뇌 서바이벌 예능의 패자부활전 퍼즐 게임에서 영감을 받은 웹 퍼즐 게임 모음 서비스
-(비공식 팬 프로젝트)의 원칙이다. `planbeforebeingbeaten`은 저장소 작업명이며 서비스 표시명은
-미정이다. TODO(SERVICE_NAME): 오너가 서비스 표시명을 확정하면 갱신한다.
+(비공식 팬 프로젝트)의 원칙이다. 서비스 표시명은 "두뇌 퍼즐"이고, `planbeforebeingbeaten`은 저장소 이름이다.
 
 ## Core Principles
 
@@ -99,4 +87,4 @@ TV 두뇌 서바이벌 예능의 패자부활전 퍼즐 게임에서 영감을 �
 - spec, plan, 코드 리뷰는 이 헌법의 준수 여부를 확인한다. 특히 원칙 I(저작권·상표)은
   새 게임, 새 아트, 새 문구가 들어올 때마다 점검한다.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-21 | **Last Amended**: 2026-11-21
+**Version**: 1.0.1 | **Ratified**: 2026-11-21 | **Last Amended**: 2026-11-22
